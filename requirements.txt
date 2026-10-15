@@ -1,3 +1,5 @@
-databricks-langchain
+databricks-langchain==0.20.0
 langgraph
 databricks-mcp
+python-dotenv
+gradio>=6,<7

@@ -1,5 +1,5 @@
 """
-Health Claims Agent — Gradio chat UI for the LangGraph HITL agent.
+Sample Agent App — Gradio chat UI for the LangGraph HITL agent.
 Databricks App entry-point (see app.yaml).
 """
 
@@ -7,7 +7,12 @@ import os
 import uuid
 import logging
 import gradio as gr
+from dotenv import load_dotenv
 from agent import HealthClaimsAgent
+
+# Load .env for local runs. No-op when deployed (no .env file), and never
+# overrides variables already set by app.yaml or the shell.
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,9 +46,11 @@ async def respond(
     if not message.strip():
         return "", history, thread_id
 
-    history = history + [[message, None]]
     response = await agent.send_message(message, thread_id)
-    history[-1][1] = response
+    history = history + [
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": response},
+    ]
     return "", history, thread_id
 
 
@@ -54,35 +61,31 @@ def new_chat():
 
 # --------------- Gradio layout ---------------
 
-with gr.Blocks(
-    title="Health Claims Agent",
-    theme=gr.themes.Soft(),
-    css="""
-        #header  { text-align: center; margin-bottom: 0.5rem; }
-        #chatbot { min-height: 480px; }
-        footer   { display: none !important; }
-    """,
-) as demo:
+THEME = gr.themes.Soft()
+CSS = """
+    #header  { text-align: center; margin-bottom: 0.5rem; }
+    #chatbot { min-height: 480px; }
+    footer   { display: none !important; }
+"""
+
+with gr.Blocks(title="Sample Data Agent with Tool Call") as demo:
 
     # per-session thread id (Gradio State is per browser tab)
     thread_id = gr.State(value=lambda: str(uuid.uuid4()))
 
     gr.Markdown(
-        "# 🏥 Health Claims Agent\n"
-        "Ask questions about health claims data. "
+        "# Sample Agent Tool/MCP Call With HITL\n"
+        "Ask general questions, or ask it to multiply numbers."
         "Tool calls require your approval before execution.",
         elem_id="header",
     )
 
-    chatbot = gr.Chatbot(
-        elem_id="chatbot",
-        show_label=False,
-        bubble_full_width=False,
-    )
+    # history is a list of {"role", "content"} dicts (Gradio 6 format)
+    chatbot = gr.Chatbot(elem_id="chatbot", show_label=False)
 
     with gr.Row():
         msg = gr.Textbox(
-            placeholder="Ask a question about health claims…",
+            placeholder="Ask me something!",
             show_label=False,
             scale=9,
             container=False,
@@ -105,4 +108,4 @@ with gr.Blocks(
 
 if __name__ == "__main__":
     port = int(os.environ.get("DATABRICKS_APP_PORT", 8000))
-    demo.launch(server_name="0.0.0.0", server_port=port)
+    demo.launch(server_name="0.0.0.0", server_port=port, theme=THEME, css=CSS)

@@ -2,3 +2,9 @@ command: ['python', 'app.py']
 env:
   - name: GRADIO_SERVER_NAME
     value: '0.0.0.0'
+  # Genie space the agent queries (Health Claims Data Room)
+  - name: GENIE_SPACE_ID
+    value: '01f08a5f354519db92cd69d45c5918ff'
+  # Unity Catalog model name, called via AI Gateway (/ai-gateway/mlflow/v1/responses)
+  - name: LLM_ENDPOINT
+    value: 'external_catalog.default.apim-gpt-6-sol'
